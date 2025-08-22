@@ -253,11 +253,9 @@ public:
 				Logger::getInstance().log(INFO, "Book search by ISBN successful.", -1, value.getID());
 				return value.getID();
 			}
-			else {
-				Logger::getInstance().log(ERROR, "Book search by ISBN failed.");
-				return -1;
-			}
 		}
+		Logger::getInstance().log(ERROR, "Book search by ISBN failed.");
+		return -1;
 	}
 
 	std::string searchBookByID(int targetID) {
