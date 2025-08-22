@@ -1,12 +1,12 @@
 #include <iostream>
 #include <map>
-#include <fstream>
-#include <chrono>
-#include <iomanip>
-#include <sstream>
+#include <fstream> // for file operations
+#include <chrono> // for time
+#include <iomanip> // for time format
+#include <sstream> // for oss
 
 constexpr int ADMIN_BORROWING_LIMIT = 15;
-constexpr int CIVILAN_BORROWING_LIMIT = 10;
+constexpr int CIVILIAN_BORROWING_LIMIT = 10;
 constexpr int STUDENT_BORROWING_LIMIT = 5;
 enum logLevel { INFO, WARNING, ERROR };
 enum memberType { ADMIN, CIVILIAN, STUDENT };
@@ -18,9 +18,10 @@ private:
 
 	void writeToFile(const std::string& message) {
 		std::ofstream file(filename, std::ios::app);
-		if (file.is_open()) {
-			file << message << "\n";
-		}
+		if (file.is_open())
+			 file << message << "\n";
+		else
+			std::cout << "File could not opened.\n";
 	}
 public:
 	Logger(const Logger&) = delete;
@@ -40,25 +41,22 @@ public:
 
 	std::string levelToString(logLevel level) {
 		switch (level) {
-		case INFO:
-			return "INFO";
-			break;
-		case WARNING:
-			return "WARNING";
-			break;
-		case ERROR:
-			return "ERROR";
-			break;
-		default:
-			return "UNKNOWN";
-			break;
+		case INFO: return "INFO";
+		case WARNING: return "WARNING";
+		case ERROR: return "ERROR";
+		default: return "UNKNOWN";
 		}
 	}
 
-	void log(logLevel level, std::string message) {
+	void log(logLevel level, const std::string& message, int memberID = -1, int bookID = -1) {
 		std::ostringstream oss;
-		oss << "time=" << getTime() << " level=" << levelToString(level) << " msg='" << message << "'";
+		oss << "time=" << getTime()
+			<< " level=" << levelToString(level)
+			<< " msg=" << "'" << message << "'";
+		if (memberID != -1) oss << " memberID=" << memberID;
+		if (bookID != -1) oss << " bookID=" << bookID;
 		writeToFile(oss.str());
+		// std::cout << oss.str() << "\n";
 	}
 };
 
@@ -78,8 +76,62 @@ public:
 	}
 
 	// Getters
-	size_t getNewBookID() { return newBookID++; }
-	size_t getNewMemberID() { return newMemberID++; }
+	size_t getNewBookID() { return ++newBookID; }
+	size_t getNewMemberID() { return ++newMemberID; }
+};
+
+class Member {
+private:
+	size_t ID;
+	std::string name;
+	size_t age;
+	int borrowedBooks = 0;
+	size_t borrowingLimit;
+public:
+	Member(size_t ID, std::string name, size_t age, size_t borrowing_limit) {
+		this->ID = ID;
+		this->name = name;
+		this->age = age;
+		this->borrowingLimit = borrowing_limit;
+	}
+
+	// Getters
+	size_t getID() const { return ID; }
+	std::string getName() const { return name; }
+	size_t getAge() const { return age; }
+	int getBorrowedBooks() const { return borrowedBooks; }
+	size_t getBorrowingLimit() const { return borrowingLimit; }
+	std::string getMemberType() const {
+		switch (borrowingLimit) {
+		case ADMIN_BORROWING_LIMIT:
+			return "Admin";
+			break;
+		case CIVILIAN_BORROWING_LIMIT:
+			return "Civilian";
+			break;
+		case STUDENT_BORROWING_LIMIT:
+			return "Student";
+			break;
+		default:
+			return "Unknown";
+			break;
+		}
+	}
+
+	// Setters
+	//void setBorrowedBooks(int borrowedBooks) { this->borrowedBooks = borrowedBooks; }
+	void incrementBorrowedBooks() { this->borrowedBooks++; }
+	void decrementBorrowedBooks() { this->borrowedBooks--; }
+
+	void display() {
+		std::cout << "Member Details:"
+			<< "\n" << " ID: " << ID
+			<< "\n" << " Name: " << name
+			<< "\n" << " Age: " << age
+			<< "\n" << " Borrowed Books: " << borrowedBooks
+			<< "\n" << " Type: " << getMemberType()
+			<< "\n";
+	}
 };
 
 class Book {
@@ -123,62 +175,9 @@ public:
 			<< "\n" << " Author: " << author
 			<< "\n" << " ISBN: " << ISBN
 			<< "\n" << " Year: " << year
-			<< "\n" << " Available: " << available;
+			<< "\n" << " Available: " << ((available) ? "Yes" : "No");
 		if (!available) std::cout << "\n" << " Borrower ID: " << borrowerID << "\n";
 	}
-};
-
-class Member {
-private:
-	size_t ID;
-	std::string name;
-	size_t age;
-	int borrowedBooks = 0;
-	size_t borrowingLimit;
-public:
-	Member(size_t ID, std::string name, size_t age, size_t borrowing_limit) {
-		this->ID = ID;
-		this->name = name;
-		this->age = age;
-		this->borrowingLimit = borrowing_limit;
-	}
-
-	// Getters
-	size_t getID() const { return ID; }
-	std::string getName() const { return name; }
-	size_t getAge() const { return age; }
-	int getBorrowedBooks() const { return borrowedBooks; }
-	size_t getBorrowingLimit() const { return borrowingLimit; }
-	std::string getMemberType() const {
-		switch (borrowingLimit) {
-		case ADMIN_BORROWING_LIMIT:
-			return "Admin";
-			break;
-		case CIVILAN_BORROWING_LIMIT:
-			return "Civilian";
-			break;
-		case STUDENT_BORROWING_LIMIT:
-			return "Student";
-			break;
-		default:
-			return "Unknown";
-			break;
-		}
-	}
-
-	// Setters
-	void setBorrowedBooks(int borrowedBooks) { this->borrowedBooks = borrowedBooks; }
-
-	void display() {
-		std::cout << "Member Details:"
-			<< "\n" << " ID: " << ID
-			<< "\n" << " Name: " << name
-			<< "\n" << " Age: " << age
-			<< "\n" << " Borrowed Books: " << borrowedBooks
-			<< "\n";
-	}
-
-
 };
 
 class Library {
@@ -191,18 +190,18 @@ public:
 		switch (type) {
 		case ADMIN:
 			members.emplace(newID, Member(newID, name, age, ADMIN_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New admin added.");
+			Logger::getInstance().log(INFO, "New admin added.", newID);
 			break;
 		case CIVILIAN:
-			members.emplace(newID, Member(newID, name, age, CIVILAN_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New civilian added.");
+			members.emplace(newID, Member(newID, name, age, CIVILIAN_BORROWING_LIMIT));
+			Logger::getInstance().log(INFO, "New civilian added.", newID);
 			break;
 		case STUDENT:
 			members.emplace(newID, Member(newID, name, age, STUDENT_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New student added.");
+			Logger::getInstance().log(INFO, "New student added.", newID);
 			break;
 		default:
-			Logger::getInstance().log(ERROR, "Invalid member type.");
+			Logger::getInstance().log(ERROR, "Invalid member type.", newID);
 			break;
 		}
 	}
@@ -211,13 +210,13 @@ public:
 		const std::string& ISBN, const std::string& year, const std::string& category) {
 		size_t newID = IDGenerator::getInstance().getNewBookID();
 		books.emplace(newID, Book(newID, title, author, ISBN, year, category));
-		Logger::getInstance().log(INFO, "New book added.");
+		Logger::getInstance().log(INFO, "New book added.", -1, newID);
 	}
 
 	int searchMemberByName(const std::string& targetName) {
 		for (const auto& [key, value] : members) {
 			if (value.getName() == targetName) {
-				Logger::getInstance().log(INFO, "Member search by name successful.");
+				Logger::getInstance().log(INFO, "Member search by name successful.", value.getID());
 				return value.getID();
 			}
 		}
@@ -228,7 +227,7 @@ public:
 	std::string searchMemberByID(int targetID) {
 		auto target = members.find(targetID);
 		if (target != members.end()) {
-			Logger::getInstance().log(INFO, "Member search by ID successful.");
+			Logger::getInstance().log(INFO, "Member search by ID successful.", targetID);
 			return target->second.getName();
 		}
 		else {
@@ -240,20 +239,18 @@ public:
 	int searchBookByTitle(const std::string& targetTitle) {
 		for (const auto& [key, value] : books) {
 			if (value.getTitle() == targetTitle) {
-				Logger::getInstance().log(INFO, "Book search by title successful.");
+				Logger::getInstance().log(INFO, "Book search by title successful.", -1, value.getID());
 				return value.getID();
 			}
-			else {
-				Logger::getInstance().log(ERROR, "Book search by title failed.");
-				return -1;
-			}
 		}
+		Logger::getInstance().log(ERROR, "Book search by title failed.");
+		return -1;
 	}
 
 	int searchBookByISBN(const std::string& targetISBN) {
 		for (const auto& [key, value] : books) {
 			if (value.getISBN() == targetISBN) {
-				Logger::getInstance().log(INFO, "Book search by ISBN successful.");
+				Logger::getInstance().log(INFO, "Book search by ISBN successful.", -1, value.getID());
 				return value.getID();
 			}
 			else {
@@ -266,7 +263,7 @@ public:
 	std::string searchBookByID(int targetID) {
 		auto target = books.find(targetID);
 		if (target != books.end()) {
-			Logger::getInstance().log(INFO, "Book search by ID successful.");
+			Logger::getInstance().log(INFO, "Book search by ID successful.", -1, targetID);
 			return target->second.getTitle() + ", " + target->second.getAuthor();
 		}
 		else {
@@ -285,7 +282,7 @@ public:
 					value.setBorrowerID(-1);
 				}
 			}
-			Logger::getInstance().log(INFO, "Member successfully deleted.");
+			Logger::getInstance().log(INFO, "Member successfully deleted.", targetID);
 			return;
 		}
 		else {
@@ -302,11 +299,10 @@ public:
 				auto targetBorrower = members.find(targetBorrowerID);
 
 				// decrese borrowed books
-				int targetBorrowedBooks = targetBorrower->second.getBorrowedBooks();
-				targetBorrower->second.setBorrowedBooks(--targetBorrowedBooks);
+				targetBorrower->second.decrementBorrowedBooks();
 			}
 			books.erase(targetID);
-			Logger::getInstance().log(INFO, "Book successfully deleted.");
+			Logger::getInstance().log(INFO, "Book successfully deleted.", -1, targetID);
 			return;
 		}
 		else {
@@ -314,21 +310,35 @@ public:
 		}
 	}
 
-	void listMembers() {
+	void listAllMembers() {
 		if (!members.empty()) {
-			std::cout << std::left
-				<< std::setw(5) << "ID"
-				<< std::setw(30) << "Name"
-				<< std::setw(5) << "Age"
-				<< std::setw(20) << "Borrowed Books"
-				<< "Type\n";
+			// Init width values
+			const size_t IDWidth = 5, nameWidth = 25, ageWidth = 5, borrowedWidth = 16, typeWidth = 10;
+			// Title line
+			std::cout << "\nMember list:\n"
+				<< std::left
+				<< std::setw(IDWidth) << "ID"
+				<< std::setw(nameWidth) << "NAME"
+				<< std::setw(ageWidth) << "AGE"
+				<< std::setw(borrowedWidth) << "BORROWED BOOKS"
+				<< std::setw(typeWidth) << "TYPE"
+				<< "\n"
+				// Seperator line
+				<< std::setw(IDWidth) << std::string(2, '-')
+				<< std::setw(nameWidth) << std::string(4, '-')
+				<< std::setw(ageWidth) << std::string(3, '-')
+				<< std::setw(borrowedWidth) << std::string(14, '-')
+				<< std::setw(typeWidth) << std::string(4, '-')
+				<< "\n";
+
+			// List lines
 			for (const auto& [key, value] : members) {
 				std::cout
-					<< std::setw(5) << value.getID()
-					<< std::setw(30) << value.getName()
-					<< std::setw(5) << value.getAge()
-					<< std::setw(20) << value.getBorrowedBooks()
-					<< value.getMemberType()
+					<< std::setw(IDWidth) << value.getID()
+					<< std::setw(nameWidth) << value.getName()
+					<< std::setw(ageWidth) << value.getAge()
+					<< std::setw(borrowedWidth) << value.getBorrowedBooks()
+					<< std::setw(typeWidth) << value.getMemberType()
 					<< "\n";
 			}
 			Logger::getInstance().log(INFO, "Members listed.");
@@ -338,25 +348,41 @@ public:
 		}
 	}
 
-	void listBooks() {
+	void listAllBooks() {
+		// Init width values
+		const size_t IDWidth = 5, titleWidth = 25, authorWidth = 25,
+			ISBNWidth = 12, yearWidth = 6, categoryWidth = 20, availableWidth = 10;
+		// Title line
 		if (!books.empty()) {
-			std::cout << std::left
-				<< std::setw(5) << "ID"
-				<< std::setw(30) << "Title"
-				<< std::setw(30) << "Author"
-				<< std::setw(30) << "ISBN"
-				<< std::setw(10) << "Year"
-				<< std::setw(20) << "Category"
-				<< "Available\n";
+			std::cout << "\nBook list:\n"
+				<< std::left
+				<< std::setw(IDWidth) << "ID"
+				<< std::setw(titleWidth) << "Title"
+				<< std::setw(authorWidth) << "Author"
+				<< std::setw(ISBNWidth) << "ISBN"
+				<< std::setw(yearWidth) << "Year"
+				<< std::setw(categoryWidth) << "Category"
+				<< std::setw(availableWidth) << "Available"
+				<< "\n"
+				// Seperator line
+				<< std::setw(IDWidth) << std::string(2, '-')
+				<< std::setw(titleWidth) << std::string(5, '-')
+				<< std::setw(authorWidth) << std::string(6, '-')
+				<< std::setw(ISBNWidth) << std::string(4, '-')
+				<< std::setw(yearWidth) << std::string(4, '-')
+				<< std::setw(categoryWidth) << std::string(8, '-')
+				<< std::setw(availableWidth) << std::string(9, '-')
+				<< "\n";
+			// List lines
 			for (const auto& [key, value] : books) {
 				std::cout
-					<< std::setw(5) << value.getID()
-					<< std::setw(30) << value.getTitle()
-					<< std::setw(30) << value.getAuthor()
-					<< std::setw(30) << value.getISBN()
-					<< std::setw(10) << value.getYear()
-					<< std::setw(20) << value.getCategory()
-					<< value.getAvailable()
+					<< std::setw(IDWidth) << value.getID()
+					<< std::setw(titleWidth) << value.getTitle()
+					<< std::setw(authorWidth) << value.getAuthor()
+					<< std::setw(ISBNWidth) << value.getISBN()
+					<< std::setw(yearWidth) << value.getYear()
+					<< std::setw(categoryWidth) << value.getCategory()
+					<< std::setw(availableWidth) << ((value.getAvailable())?"Yes":"No")
 					<< "\n";
 			}
 			Logger::getInstance().log(INFO, "Books listed.");
@@ -366,24 +392,25 @@ public:
 		}
 	}
 
-	void borrow_book(size_t targetMemberID, size_t targetBookID) {
-		if (searchMemberByID(targetMemberID) != "UNKNOWN") {
+	void borrow_book(size_t targetBorrowerID, size_t targetBookID) {
+		if (searchMemberByID(targetBorrowerID) != "UNKNOWN") {
 			if (searchBookByID(targetBookID) != "UNKNOWN") {
 				// Init target member and book
-				auto targetMember = members.find(targetMemberID);
+				auto targetMember = members.find(targetBorrowerID);
 				auto targetBook = books.find(targetBookID);
 
 				// Borrowing limit control
 				if (targetMember->second.getBorrowingLimit() > targetMember->second.getBorrowedBooks()) {
-					// Setting number of borrowed books
-					int targetBorrowedBooks = targetMember->second.getBorrowedBooks();
-					targetMember->second.setBorrowedBooks(++targetBorrowedBooks);
+					// Increasing number of borrowed books
+					targetMember->second.incrementBorrowedBooks();
 
 					// Setting availability and borrowerID of book
 					targetBook->second.setAvailable(false);
-					targetBook->second.setBorrowerID(targetMemberID);
+					targetBook->second.setBorrowerID(targetBorrowerID);
+					// Logging
+					Logger::getInstance().log(INFO, "Book successfully borrowed.", targetBorrowerID, targetBookID);
 				}
-				else Logger::getInstance().log(ERROR, "Reached the limit for borrowing.");
+				else Logger::getInstance().log(ERROR, "Reached the limit for borrowing.", targetBorrowerID, targetBookID);
 			}
 			else Logger::getInstance().log(ERROR, "Invalid bookID at borrow function.");
 		}
@@ -396,17 +423,57 @@ public:
 			int targetBorrowerID = targetBook->second.getBorrowerID();
 			auto targetBorrower = members.find(targetBorrowerID);
 			// Decrease the number of borrowed books
-			int targetBorrowedBooks = targetBorrower->second.getBorrowedBooks();
-			targetBorrower->second.setBorrowedBooks(--targetBorrowedBooks);
+			targetBorrower->second.decrementBorrowedBooks();
 			// Make book available
 			targetBook->second.setAvailable(true);
 			targetBook->second.setBorrowerID(-1);
-			Logger::getInstance().log(INFO, "Book successfully returned.");
+			Logger::getInstance().log(INFO, "Book successfully returned.", targetBorrowerID, targetBookID);
 		}
 		else Logger::getInstance().log(ERROR, "Invalid bookID at return function.");
 	}
 };
 
 int main() {
+	Library lib;
 
+	// Add members
+	lib.addMember(ADMIN, "Alice", 35);
+	lib.addMember(CIVILIAN, "Bob", 28);
+	lib.addMember(STUDENT, "Charlie", 20);
+
+	// Add books
+	lib.addBook("C++ Basics", "Bjarne Stroustrup", "1234567890", "1985", "Programming");
+	lib.addBook("Data Structures", "Mark Allen Weiss", "0987654321", "2013", "Computer Science");
+
+	// List members
+	lib.listAllMembers();
+
+	// List books
+	lib.listAllBooks();
+
+	// Borrow a book
+	int bookID = lib.searchBookByTitle("C++ Basics");
+	int memberID = lib.searchMemberByName("Bob");
+	lib.borrow_book(memberID, bookID);
+
+	// Display the list again
+	lib.listAllBooks();
+	lib.listAllMembers();
+
+	// Return the book
+	lib.return_book(bookID);
+
+	// Display the list again
+	lib.listAllBooks();
+	lib.listAllMembers();
+
+	// Delete a book and a member
+	lib.deleteBook(bookID);
+	lib.deleteMember(memberID);
+
+	// Display the list again
+	lib.listAllBooks();
+	lib.listAllMembers();
+
+	return 0;
 }
