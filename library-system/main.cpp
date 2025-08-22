@@ -8,8 +8,8 @@
 constexpr int ADMIN_BORROWING_LIMIT = 15;
 constexpr int CIVILIAN_BORROWING_LIMIT = 10;
 constexpr int STUDENT_BORROWING_LIMIT = 5;
-enum logLevel { INFO, WARNING, ERROR };
-enum memberType { ADMIN, CIVILIAN, STUDENT };
+enum class logLevel { INFO, WARNING, ERROR };
+enum class memberType { ADMIN, CIVILIAN, STUDENT };
 
 class Logger {
 private:
@@ -41,9 +41,9 @@ public:
 
 	std::string levelToString(logLevel level) {
 		switch (level) {
-		case INFO: return "INFO";
-		case WARNING: return "WARNING";
-		case ERROR: return "ERROR";
+		case logLevel::INFO: return "INFO";
+		case logLevel::WARNING: return "WARNING";
+		case logLevel::ERROR: return "ERROR";
 		default: return "UNKNOWN";
 		}
 	}
@@ -188,20 +188,20 @@ public:
 	void addMember(memberType type, const std::string& name, size_t age) {
 		size_t newID = IDGenerator::getInstance().getNewMemberID();
 		switch (type) {
-		case ADMIN:
+		case memberType::ADMIN:
 			members.emplace(newID, Member(newID, name, age, ADMIN_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New admin added.", newID);
+			Logger::getInstance().log(logLevel::INFO, "New admin added.", newID);
 			break;
-		case CIVILIAN:
+		case memberType::CIVILIAN:
 			members.emplace(newID, Member(newID, name, age, CIVILIAN_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New civilian added.", newID);
+			Logger::getInstance().log(logLevel::INFO, "New civilian added.", newID);
 			break;
-		case STUDENT:
+		case memberType::STUDENT:
 			members.emplace(newID, Member(newID, name, age, STUDENT_BORROWING_LIMIT));
-			Logger::getInstance().log(INFO, "New student added.", newID);
+			Logger::getInstance().log(logLevel::INFO, "New student added.", newID);
 			break;
 		default:
-			Logger::getInstance().log(ERROR, "Invalid member type.", newID);
+			Logger::getInstance().log(logLevel::ERROR, "Invalid member type.", newID);
 			break;
 		}
 	}
@@ -210,28 +210,28 @@ public:
 		const std::string& ISBN, const std::string& year, const std::string& category) {
 		size_t newID = IDGenerator::getInstance().getNewBookID();
 		books.emplace(newID, Book(newID, title, author, ISBN, year, category));
-		Logger::getInstance().log(INFO, "New book added.", -1, newID);
+		Logger::getInstance().log(logLevel::INFO, "New book added.", -1, newID);
 	}
 
 	int searchMemberByName(const std::string& targetName) {
 		for (const auto& [key, value] : members) {
 			if (value.getName() == targetName) {
-				Logger::getInstance().log(INFO, "Member search by name successful.", value.getID());
+				Logger::getInstance().log(logLevel::INFO, "Member search by name successful.", value.getID());
 				return value.getID();
 			}
 		}
-		Logger::getInstance().log(ERROR, "Member search by name failed.");
+		Logger::getInstance().log(logLevel::ERROR, "Member search by name failed.");
 		return -1;
 	}
 
 	std::string searchMemberByID(int targetID) {
 		auto target = members.find(targetID);
 		if (target != members.end()) {
-			Logger::getInstance().log(INFO, "Member search by ID successful.", targetID);
+			Logger::getInstance().log(logLevel::INFO, "Member search by ID successful.", targetID);
 			return target->second.getName();
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Member search by ID failed.");
+			Logger::getInstance().log(logLevel::ERROR, "Member search by ID failed.");
 			return "UNKNOWN";
 		}
 	}
@@ -239,33 +239,33 @@ public:
 	int searchBookByTitle(const std::string& targetTitle) {
 		for (const auto& [key, value] : books) {
 			if (value.getTitle() == targetTitle) {
-				Logger::getInstance().log(INFO, "Book search by title successful.", -1, value.getID());
+				Logger::getInstance().log(logLevel::INFO, "Book search by title successful.", -1, value.getID());
 				return value.getID();
 			}
 		}
-		Logger::getInstance().log(ERROR, "Book search by title failed.");
+		Logger::getInstance().log(logLevel::ERROR, "Book search by title failed.");
 		return -1;
 	}
 
 	int searchBookByISBN(const std::string& targetISBN) {
 		for (const auto& [key, value] : books) {
 			if (value.getISBN() == targetISBN) {
-				Logger::getInstance().log(INFO, "Book search by ISBN successful.", -1, value.getID());
+				Logger::getInstance().log(logLevel::INFO, "Book search by ISBN successful.", -1, value.getID());
 				return value.getID();
 			}
 		}
-		Logger::getInstance().log(ERROR, "Book search by ISBN failed.");
+		Logger::getInstance().log(logLevel::ERROR, "Book search by ISBN failed.");
 		return -1;
 	}
 
 	std::string searchBookByID(int targetID) {
 		auto target = books.find(targetID);
 		if (target != books.end()) {
-			Logger::getInstance().log(INFO, "Book search by ID successful.", -1, targetID);
+			Logger::getInstance().log(logLevel::INFO, "Book search by ID successful.", -1, targetID);
 			return target->second.getTitle() + ", " + target->second.getAuthor();
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Book search by ID failed.");
+			Logger::getInstance().log(logLevel::ERROR, "Book search by ID failed.");
 			return "UNKNOWN";
 		}
 	}
@@ -280,11 +280,11 @@ public:
 					value.setBorrowerID(-1);
 				}
 			}
-			Logger::getInstance().log(INFO, "Member successfully deleted.", targetID);
+			Logger::getInstance().log(logLevel::INFO, "Member successfully deleted.", targetID);
 			return;
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Failed to delete the member.");
+			Logger::getInstance().log(logLevel::ERROR, "Failed to delete the member.");
 		}
 	}
 
@@ -300,11 +300,11 @@ public:
 				targetBorrower->second.decrementBorrowedBooks();
 			}
 			books.erase(targetID);
-			Logger::getInstance().log(INFO, "Book successfully deleted.", -1, targetID);
+			Logger::getInstance().log(logLevel::INFO, "Book successfully deleted.", -1, targetID);
 			return;
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Failed to delete the book.");
+			Logger::getInstance().log(logLevel::ERROR, "Failed to delete the book.");
 		}
 	}
 
@@ -339,10 +339,10 @@ public:
 					<< std::setw(typeWidth) << value.getMemberType()
 					<< "\n";
 			}
-			Logger::getInstance().log(INFO, "Members listed.");
+			Logger::getInstance().log(logLevel::INFO, "Members listed.");
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Members map empty.");
+			Logger::getInstance().log(logLevel::ERROR, "Members map empty.");
 		}
 	}
 
@@ -383,10 +383,10 @@ public:
 					<< std::setw(availableWidth) << ((value.getAvailable())?"Yes":"No")
 					<< "\n";
 			}
-			Logger::getInstance().log(INFO, "Books listed.");
+			Logger::getInstance().log(logLevel::INFO, "Books listed.");
 		}
 		else {
-			Logger::getInstance().log(ERROR, "Books map empty.");
+			Logger::getInstance().log(logLevel::ERROR, "Books map empty.");
 		}
 	}
 
@@ -406,13 +406,13 @@ public:
 					targetBook->second.setAvailable(false);
 					targetBook->second.setBorrowerID(targetBorrowerID);
 					// Logging
-					Logger::getInstance().log(INFO, "Book successfully borrowed.", targetBorrowerID, targetBookID);
+					Logger::getInstance().log(logLevel::INFO, "Book successfully borrowed.", targetBorrowerID, targetBookID);
 				}
-				else Logger::getInstance().log(ERROR, "Reached the limit for borrowing.", targetBorrowerID, targetBookID);
+				else Logger::getInstance().log(logLevel::ERROR, "Reached the limit for borrowing.", targetBorrowerID, targetBookID);
 			}
-			else Logger::getInstance().log(ERROR, "Invalid bookID at borrow function.");
+			else Logger::getInstance().log(logLevel::ERROR, "Invalid bookID at borrow function.");
 		}
-		else Logger::getInstance().log(ERROR, "Invalid memberID at borrow function.");
+		else Logger::getInstance().log(logLevel::ERROR, "Invalid memberID at borrow function.");
 	}
 
 	void return_book(size_t targetBookID) {
@@ -425,9 +425,9 @@ public:
 			// Make book available
 			targetBook->second.setAvailable(true);
 			targetBook->second.setBorrowerID(-1);
-			Logger::getInstance().log(INFO, "Book successfully returned.", targetBorrowerID, targetBookID);
+			Logger::getInstance().log(logLevel::INFO, "Book successfully returned.", targetBorrowerID, targetBookID);
 		}
-		else Logger::getInstance().log(ERROR, "Invalid bookID at return function.");
+		else Logger::getInstance().log(logLevel::ERROR, "Invalid bookID at return function.");
 	}
 };
 
@@ -435,9 +435,9 @@ int main() {
 	Library lib;
 
 	// Add members
-	lib.addMember(ADMIN, "Alice", 35);
-	lib.addMember(CIVILIAN, "Bob", 28);
-	lib.addMember(STUDENT, "Charlie", 20);
+	lib.addMember(memberType::ADMIN, "Alice", 35);
+	lib.addMember(memberType::CIVILIAN, "Bob", 28);
+	lib.addMember(memberType::STUDENT, "Charlie", 20);
 
 	// Add books
 	lib.addBook("C++ Basics", "Bjarne Stroustrup", "1234567890", "1985", "Programming");
